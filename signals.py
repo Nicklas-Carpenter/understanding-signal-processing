@@ -3,7 +3,7 @@ from matplotlib.pyplot import subplots, show as show_plot
 from numpy import linspace
 from sympy import (
     Eq, dsolve, Function, symbols, srepr, sympify, Heaviside, Piecewise,
-    lambdify, pprint, fourier_transform
+    lambdify, pprint, fourier_transform as fou_trans , integrate, exp, I
 )
 
 
@@ -32,6 +32,13 @@ def lowpass_filter(signal, R=1, C=1, start=-10000):
     return sol.rhs
 
 
+def highpass_filter(signal, R=1, C=1, start=-10000):
+    y = symbols("y", cls=Function, real=True)
+    diff_eq = Eq(y(t)/R + C*y(t).diff(t), signal.diff(t)) 
+    sol = dsolve(diff_eq, y(t), ics={y(start): 0})
+    return sol.rhs
+
+
 def sig_plot(signal, start, end, np=None):
     if np is None:
         np = (end - start) * 10000
@@ -42,6 +49,27 @@ def sig_plot(signal, start, end, np=None):
 
     fig, ax = subplots()
     ax.plot(tt, y)
+    show_plot(block=False) 
+
+
+def fourier_transform(signal):
+    return fou_trans(signal, t, w)
+
+
+def heuristic_fourier_transform(signal, lb=-1000, up=1000):
+    return integrate(signal * exp(-I * w * t), (t, lb, up))
+
+
+def fourier_plot(spectrum, start, end, np=None):
+    if np is None:
+        np = (end - start) * 10000
+
+    fn = lambdify(w, spectrum)
+    ww = linspace(start, end, np)
+    y = fn(ww)
+
+    fig, ax = subplots()
+    ax.plot(ww, y)
     show_plot(block=False) 
 
 

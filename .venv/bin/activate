@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/home/nicklas/projects/understanding-signal-processing/.venv"
+VIRTUAL_ENV="/data/brik2-devel/npc/projects/understanding-signal-processing/.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

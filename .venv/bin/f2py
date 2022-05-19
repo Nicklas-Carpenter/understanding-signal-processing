@@ -1,4 +1,4 @@
-#!/home/nicklas/projects/understanding-signal-processing/.venv/bin/python
+#!/data/brik2-devel/npc/projects/understanding-signal-processing/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
