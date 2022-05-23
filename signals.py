@@ -3,12 +3,25 @@ from matplotlib.pyplot import subplots, show as show_plot
 from numpy import linspace
 from sympy import (
     Eq, dsolve, Function, symbols, srepr, sympify, Heaviside, Piecewise,
-    lambdify, pprint, fourier_transform as fou_trans , integrate, exp, I
+    lambdify, pprint, fourier_transform as fou_trans, integrate, exp, I
 )
 
 
-t, w = symbols("t, w", real=True)
+t, w, T, k, d, R, C = symbols("t w T k d R C", real=True)
 u = Heaviside 
+
+a = T*(k + d/2)
+rect = u(t + a) - u(t - a)
+rect_base = rect.subs([(T, 1), (k, 0), (d, 0.5)])
+rect_ft_base = fou_trans(rect_base, t, w)
+
+y = symbols("y", cls=Function, real=True)
+lowpass_rect_system = Eq(y(t) + R*C*y(t).diff(t), rect)
+lowpass_rect_sol = dsolve(lowpass_rect_system, y(t))
+C1 = symbols("C1")
+rect_lresp_base = lowpass_rect_sol.rhs.subs(C1, 0)
+
+H_lowpass = 1 / (R*I*w*C + 1)
 
 
 def square_wave(A=1, T=1, d=0.5, c=0, n=1):
@@ -72,5 +85,22 @@ def fourier_plot(spectrum, start, end, np=None):
     ax.plot(ww, y)
     show_plot(block=False) 
 
+
+def fourier_transform_rect_sequence(n, TT, dd):
+    ft = 0
+
+    for kk in range(-floor(n/2), ceil(n/2)):
+        aa = a.subs([(k, kk), (d, dd), (T, TT)]) 
+        ft = ft + rect_ft_base * exp(-I * w * aa)
+
+    return ft
+
+
+def square_wave_system(TT=1, dd=0.5, RR=1, CC=1, n=1):
+    s = square_wave(A=1, T=TT, d=dd, n=n)
+    s_ft = fourier_transform_rect_sequence(n, TT, dd) 
+
+    sig_plot(s, -12, 12)
+    fourier_plot(s_ft, -12, 12)
 
 # vim: ai: et: sts=4: ts=4
