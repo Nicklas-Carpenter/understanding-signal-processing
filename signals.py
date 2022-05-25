@@ -1,6 +1,6 @@
 from math import ceil, floor
 from matplotlib.pyplot import subplots, show as show_plot
-from numpy import linspace
+from numpy import linspace, abs
 from sympy import (
     Eq, dsolve, Function, symbols, srepr, sympify, Heaviside, Piecewise,
     lambdify, pprint, fourier_transform as fou_trans, integrate, exp, I
@@ -21,7 +21,7 @@ lowpass_rect_sol = dsolve(lowpass_rect_system, y(t))
 C1 = symbols("C1")
 rect_lresp_base = lowpass_rect_sol.rhs.subs(C1, 0)
 
-H_lowpass = 1 / (R*I*w*C + 1)
+H_lowpass_template = 1 / (R*I*w*C + 1)
 
 
 def square_wave(A=1, T=1, d=0.5, c=0, n=1):
@@ -79,7 +79,7 @@ def fourier_plot(spectrum, start, end, np=None):
 
     fn = lambdify(w, spectrum)
     ww = linspace(start, end, np)
-    y = fn(ww)
+    y = abs(fn(ww))
 
     fig, ax = subplots()
     ax.plot(ww, y)
@@ -96,11 +96,44 @@ def fourier_transform_rect_sequence(n, TT, dd):
     return ft
 
 
+def rect_lowpass_filter_response_sequence(n, TT, dd, RR, CC):
+    lresp_base = rect_lresp_base.subs([(T, TT), (d, dd), (R, RR), (C, CC)])
+
+    lresp = 0
+    for kk in range(-floor(n/2), ceil(n/2)):
+        lresp = lresp + lresp_base.subs(k, kk)
+
+    return lresp
+
+
 def square_wave_system(TT=1, dd=0.5, RR=1, CC=1, n=1):
     s = square_wave(A=1, T=TT, d=dd, n=n)
     s_ft = fourier_transform_rect_sequence(n, TT, dd) 
 
-    sig_plot(s, -12, 12)
-    fourier_plot(s_ft, -12, 12)
+    H_lowpass = H_lowpass_template.subs([(R, RR), (C, CC)])
+    f_lresp = s_ft * H_lowpass 
+    lresp = rect_lowpass_filter_response_sequence(n, TT, dd, RR, CC)
+
+    s_lambda = lambdify(t, s)
+    s_ft_lambda = lambdify(w, s_ft)
+    f_lresp_lambda = lambdify(w, f_lresp)
+    lresp_lambda = lambdify(t, lresp)
+
+    tt = linspace(-12, 12, 240000)
+    ww = linspace(-12, 12, 240000)
+
+    s_output = s_lambda(tt)
+    s_ft_output = s_ft_lambda(ww)
+    f_lresp_output = f_lresp_lambda(ww)
+    lresp_output = lresp_lambda(tt)
+
+    fig0, (ax0, ax1) = subplots(1, 2)
+    fig1, (ax2, ax3) = subplots(1, 2)
+    ax0.plot(tt, s_output)
+    ax1.plot(tt, lresp_output)
+    ax2.plot(ww, abs(s_ft_output))
+    ax3.plot(ww, abs(f_lresp_output))
+
+
 
 # vim: ai: et: sts=4: ts=4
